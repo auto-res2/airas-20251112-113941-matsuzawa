@@ -6,5 +6,82 @@
     "learning rate optimization",
     "LR range test",
     "AdamW learning rate"
+  ],
+  "research_study_list": [
+    {
+      "title": "QLoRA: Efficient Finetuning of Quantized LLMs"
+    },
+    {
+      "title": "QLoRA: Efficient Finetuning of Quantized LLMs"
+    },
+    {
+      "title": "QA-LoRA: Quantization-Aware Low-Rank Adaptation of Large Language Models"
+    },
+    {
+      "title": "QuanTA: Efficient High-Rank Fine-Tuning of LLMs with Quantum-Informed Tensor Adaptation"
+    },
+    {
+      "title": "Evaluating Quantized Large Language Models"
+    },
+    {
+      "title": "MetaMath: Bootstrap Your Own Mathematical Questions for Large Language Models"
+    },
+    {
+      "title": "OpenMathInstruct-1: A 1.8 Million Math Instruction Tuning Dataset"
+    },
+    {
+      "title": "OpenMathInstruct-1: A 1.8 Million Math Instruction Tuning Dataset"
+    },
+    {
+      "title": "A Careful Examination of Large Language Model Performance on Grade School Arithmetic"
+    },
+    {
+      "title": "Training Chain-of-Thought via Latent-Variable Inference"
+    },
+    {
+      "title": "AutoLRS: Automatic Learning-Rate Schedule by Bayesian Optimization on the Fly"
+    },
+    {
+      "title": "Reverse engineering learned optimizers reveals known and novel mechanisms"
+    },
+    {
+      "title": "Mechanic: A Learning Rate Tuner"
+    },
+    {
+      "title": "MoMo: Momentum Models for Adaptive Learning Rates"
+    },
+    {
+      "title": "Where Do Large Learning Rates Lead Us?"
+    },
+    {
+      "title": "Long Range Arena : A Benchmark for Efficient Transformers "
+    },
+    {
+      "title": "Improving Distant 3D Object Detection Using 2D Box Supervision"
+    },
+    {
+      "title": "What Truly Matters in Trajectory Prediction for Autonomous Driving?"
+    },
+    {
+      "title": "Viewing Transformers Through the Lens of Long Convolutions Layers"
+    },
+    {
+      "title": "SWT-Bench: Testing and Validating Real-World Bug-Fixes with Code Agents"
+    },
+    {
+      "title": "Implicit Bias of AdamW: $\\ell_\\infty$-Norm Constrained Optimization"
+    },
+    {
+      "title": "On the Variance of the Adaptive Learning Rate and Beyond"
+    },
+    {
+      "title": "Analyzing & Reducing the Need for Learning Rate Warmup in GPT Training"
+    },
+    {
+      "title": "How to Fine-Tune Vision Models with SGD"
+    },
+    {
+      "title": "Why Warmup the Learning Rate? Underlying Mechanisms and Improvements"
+    }
   ]
 }
