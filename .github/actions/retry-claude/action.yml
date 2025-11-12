@@ -1,0 +1,63 @@
+name: "Retry Claude Code Action (3 attempts)"
+description: "Run anthropics/claude-code-action@v1 up to 3 times with retry logic"
+
+inputs:
+  anthropic_api_key:
+    description: "Anthropic API key"
+    required: true
+  prompt:
+    description: "Prompt text for Claude"
+    required: true
+  claude_args:
+    description: "Arguments passed to Claude"
+    required: false
+    default: "--max-turns=100 --allowed-tools Bash,Write,Edit,MultiEdit,TodoWrite"
+  timeout_minutes:
+    description: "Timeout in minutes for each attempt"
+    required: false
+    default: '20'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Claude Code Run (Attempt 1)
+      id: claude_run_1
+      continue-on-error: true
+      uses: anthropics/claude-code-action@v1
+      timeout-minutes: ${{ inputs.timeout_minutes }}
+      with:
+        anthropic_api_key: ${{ inputs.anthropic_api_key }}
+        prompt: ${{ inputs.prompt }}
+        claude_args: ${{ inputs.claude_args }}
+
+    - name: Claude Code Run (Attempt 2)
+      id: claude_run_2
+      if: steps.claude_run_1.outcome == 'failure'
+      continue-on-error: true
+      uses: anthropics/claude-code-action@v1
+      timeout-minutes: ${{ inputs.timeout_minutes }}
+      with:
+        anthropic_api_key: ${{ inputs.anthropic_api_key }}
+        prompt: ${{ inputs.prompt }}
+        claude_args: ${{ inputs.claude_args }}
+
+    - name: Claude Code Run (Attempt 3)
+      id: claude_run_3
+      if: steps.claude_run_2.outcome == 'failure'
+      continue-on-error: true
+      uses: anthropics/claude-code-action@v1
+      timeout-minutes: ${{ inputs.timeout_minutes }}
+      with:
+        anthropic_api_key: ${{ inputs.anthropic_api_key }}
+        prompt: ${{ inputs.prompt }}
+        claude_args: ${{ inputs.claude_args }}
+
+    - name: Fail if all retries failed
+      if: |
+        steps.claude_run_1.outcome == 'failure' &&
+        steps.claude_run_2.outcome == 'failure' &&
+        steps.claude_run_3.outcome == 'failure'
+      shell: bash
+      run: |
+        echo "❌ Claude Code Action failed after 3 attempts."
+        exit 1
