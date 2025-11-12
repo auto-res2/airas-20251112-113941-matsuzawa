@@ -24,7 +24,6 @@ runs:
       id: claude_run_1
       continue-on-error: true
       uses: anthropics/claude-code-action@v1
-      timeout-minutes: ${{ inputs.timeout_minutes }}
       with:
         anthropic_api_key: ${{ inputs.anthropic_api_key }}
         prompt: ${{ inputs.prompt }}
@@ -35,7 +34,6 @@ runs:
       if: steps.claude_run_1.outcome == 'failure'
       continue-on-error: true
       uses: anthropics/claude-code-action@v1
-      timeout-minutes: ${{ inputs.timeout_minutes }}
       with:
         anthropic_api_key: ${{ inputs.anthropic_api_key }}
         prompt: ${{ inputs.prompt }}
@@ -46,7 +44,6 @@ runs:
       if: steps.claude_run_2.outcome == 'failure'
       continue-on-error: true
       uses: anthropics/claude-code-action@v1
-      timeout-minutes: ${{ inputs.timeout_minutes }}
       with:
         anthropic_api_key: ${{ inputs.anthropic_api_key }}
         prompt: ${{ inputs.prompt }}
