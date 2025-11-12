@@ -767,7 +767,47 @@
     "iterations": [
       {
         "iteration_id": 1,
-        "method": "Hierarchical Functional‐Invariant Constrained Optimisation (HiFi-SACO)\n1. Capability taxonomy  C={syntax,facts,arith,logic}.  For each c∈C we maintain a *functional sentinel pool* S_c of n=256 short prompts that are automatically mined online:\n   – Every 200 steps we draw 4k sentences/questions from a live web crawl, evaluate Fisher influence scores w.r.t. the adapter weights, cluster with K-Means++ and keep the top 256 per capability that maximise expected influence on capability-specific evaluation heads (POS-tagger, QA head, math head, etc.).\n2. For every sentinel i we track moving KL   k_i  and allocate a per-capability budget  b_c.  Budgets evolve by multiplicative weight updates so that  Σ_c b_c ≈ B_target, where  B_target  is determined *once* from a theory-based bound:  B_target = π/√(N·d)  with N the training set size and d adapter rank.\n3. Dual control: at each step we compute utility  u = Δ task-loss / Σ_i Δk_i, update the global price λ as in SACO, *and* per-capability prices λ_c from u_c = Δ task-loss / Σ_{i∈S_c} Δk_i.\n4. Learning-rate scale α_t = γ/(λ+ε); per-capability dampers  δ_c = 1/(λ_c+ε).  Effective step for parameter block p is  lr_eff = lr · min(α_t, δ_{cap(p)})  where cap(p) labels the capability the block mainly serves (determined once by gradient attribution).\n5. Hard safety: if any k_i exceeds 0.5·b_{cap(i)} the current batch is re-played with lr=0 (gradient flushing) and the optimiser state is rolled back – guarantees monotone budget compliance.\nAll operations are batched; extra FLOPs <1 %."
+        "method": "Hierarchical Functional‐Invariant Constrained Optimisation (HiFi-SACO)\n1. Capability taxonomy  C={syntax,facts,arith,logic}.  For each c∈C we maintain a *functional sentinel pool* S_c of n=256 short prompts that are automatically mined online:\n   – Every 200 steps we draw 4k sentences/questions from a live web crawl, evaluate Fisher influence scores w.r.t. the adapter weights, cluster with K-Means++ and keep the top 256 per capability that maximise expected influence on capability-specific evaluation heads (POS-tagger, QA head, math head, etc.).\n2. For every sentinel i we track moving KL   k_i  and allocate a per-capability budget  b_c.  Budgets evolve by multiplicative weight updates so that  Σ_c b_c ≈ B_target, where  B_target  is determined *once* from a theory-based bound:  B_target = π/√(N·d)  with N the training set size and d adapter rank.\n3. Dual control: at each step we compute utility  u = Δ task-loss / Σ_i Δk_i, update the global price λ as in SACO, *and* per-capability prices λ_c from u_c = Δ task-loss / Σ_{i∈S_c} Δk_i.\n4. Learning-rate scale α_t = γ/(λ+ε); per-capability dampers  δ_c = 1/(λ_c+ε).  Effective step for parameter block p is  lr_eff = lr · min(α_t, δ_{cap(p)})  where cap(p) labels the capability the block mainly serves (determined once by gradient attribution).\n5. Hard safety: if any k_i exceeds 0.5·b_{cap(i)} the current batch is re-played with lr=0 (gradient flushing) and the optimiser state is rolled back – guarantees monotone budget compliance.\nAll operations are batched; extra FLOPs <1 %.",
+        "experimental_design": {
+          "experiment_summary": "This experiment fine-tunes a single 4-bit-QLoRA instance of the 0.6 B-parameter Qwen3 model on the GSM8K mathematical-reasoning corpus while enforcing capability-wise safety constraints with the new Hierarchical Functional-Invariant Constrained Optimisation (HiFi-SACO) algorithm. A control run with the state-of-the-art KL controller KARMA is executed under identical settings. Both runs share the same data splits, preprocessing, optimiser (AdamW) and hardware (1×A100-80 GB). During training, HiFi-SACO continuously mines capability-specific sentinel prompts from a live Common-Crawl stream, tracks the incremental KL drift each update induces on those sentinels, self-calibrates per-capability budgets from the closed-form bound B_target = π/√(N·d), and modulates the effective learning-rate of every adapter block through a dual-price mechanism to maximise task improvement per unit KL while keeping every sentinel below its allocated budget. Exact-match accuracy on the GSM8K dev set, several drift-safety statistics and efficiency ratios are recorded every 100 optimisation steps. At the end of 3 training epochs the two methods are compared on all metrics to demonstrate that HiFi-SACO delivers higher accuracy and strictly lower worst-case budget violations without manual hyper-parameter tuning.",
+          "evaluation_metrics": [
+            "Exact-match accuracy (GSM8K dev)",
+            "Worst-case per-capability KL overshoot (max_i k_i / b_cap(i))",
+            "AUC to 58 % EM on GSM8K",
+            "Drift-efficiency (ΔEM / Σ_i k_i)",
+            "(i) Exact-match on task dev sets; (ii) worst-case per-capability KL overshoot max_i(k_i/b_{cap(i)}); (iii) AUC-to-58 % GSM8K; (iv) drift-efficiency = ΔEM / Σ_i k_i."
+          ],
+          "proposed_method": "Hierarchical Functional-Invariant Constrained Optimisation (HiFi-SACO)\nObjective: maximise task-loss reduction while guaranteeing that knowledge encoded in distinct functional capabilities (syntax, factual recall, arithmetic, logical reasoning) is never forgotten beyond theory-derived budgets that adapt automatically to data size and adapter rank.\nKey components:\n1. Capability taxonomy C = {syntax, facts, arith, logic}.\n2. Functional sentinel pools: every 200 gradient steps, 4 000 fresh texts/questions are streamed from Common-Crawl; Fisher influence scores w.r.t. the LoRA weights are computed; K-Means++ clusters them inside each capability-specific feature space induced by lightweight evaluation heads (POS tagger, QA head, math head, logical entailment head). The 256 most influential samples per capability become/update the sentinel pool S_c.\n3. Budget initialisation: total permissible drift B_target = π / √(N·d) with N training examples and adapter rank d. Budgets b_c are initialised uniformly and then updated multiplicatively (MWU) so that Σ_c b_c ≈ B_target at all times.\n4. Dual-price control: after every optimisation step t the incremental task utility u_t = ΔL_task / Σ_i Δk_i is computed, where k_i is the moving KL between current and base model on sentinel i. A global price λ and per-capability prices λ_c are updated via exponentiated-gradient on u_t and u_{c,t} respectively. The scalar learning-rate for the whole model is scaled by α_t = γ/(λ+ε) and further damped per capability by δ_c = 1/(λ_c+ε).\n5. Block-level gating: each LoRA parameter block p is tagged once with the capability it serves most (highest average gradient attribution on capability-labelled minibatches). The effective learning-rate used for that block is lr_eff = lr_base × min(α_t, δ_cap(p)).\n6. Hard safety: if any sentinel KL exceeds 0.5·b_cap the current batch is replayed with zero learning-rate and the optimiser state is rolled back, guaranteeing monotone budget compliance.\n7. Complexity: all additional operations are vectorised; wall-clock overhead <1 % compared with SACO.\nImplementation details: PyTorch 2.3, bitsandbytes 0.43, Transformers 4.51, PEFT 0.11. Sentinel influence scoring uses a single backward pass over the 4 000 candidate texts; clustering is done with faiss-kmeans on GPU.",
+          "comparative_methods": [
+            "KARMA"
+          ],
+          "models_to_use": [
+            "Qwen3-0.6B"
+          ],
+          "datasets_to_use": [
+            "gsm8k"
+          ],
+          "hyperparameters_to_search": {
+            "base_learning_rate": "1e-5-5e-4",
+            "gamma (γ)": "0.1-5",
+            "eta (η, dual-price step)": "0.001-0.1",
+            "sentinel_pool_refresh_interval": "100,200,400"
+          }
+        },
+        "experiment_runs": [
+          {
+            "run_id": "proposed-iter1-Qwen3-0.6B-gsm8k",
+            "method_name": "proposed",
+            "model_name": "Qwen3-0.6B",
+            "dataset_name": "gsm8k"
+          },
+          {
+            "run_id": "comparative-1-iter1-Qwen3-0.6B-gsm8k",
+            "method_name": "comparative-1",
+            "model_name": "Qwen3-0.6B",
+            "dataset_name": "gsm8k"
+          }
+        ]
       }
     ]
   }
