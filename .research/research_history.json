@@ -764,6 +764,11 @@
       "expected_result": "Across three model sizes HiFi-SACO matches or exceeds SACO accuracy (+0.7 EM on GSM8K, +1.2 EM on GSM1k) while *never* violating per-capability drift budgets (max overshoot ≤0.03).  Compared to KARMA it reduces factual-QA degradation by 55 % and cuts variance over seeds by 30 %.  Automatic B_target works for all models without retune.",
       "expected_conclusion": "HiFi-SACO elevates safety-aware PEFT from a single KL knob to a hierarchy of functional guarantees that self-adapt across tasks and scales.  By proving that budget compliance holds per capability and by removing all user-tuned drift hyper-parameters, the method enables trustworthy, low-resource fine-tuning of LLMs for education, health and other socially critical domains where accidental knowledge loss is unacceptable."
     },
-    "iterations": []
+    "iterations": [
+      {
+        "iteration_id": 1,
+        "method": "Hierarchical Functional‐Invariant Constrained Optimisation (HiFi-SACO)\n1. Capability taxonomy  C={syntax,facts,arith,logic}.  For each c∈C we maintain a *functional sentinel pool* S_c of n=256 short prompts that are automatically mined online:\n   – Every 200 steps we draw 4k sentences/questions from a live web crawl, evaluate Fisher influence scores w.r.t. the adapter weights, cluster with K-Means++ and keep the top 256 per capability that maximise expected influence on capability-specific evaluation heads (POS-tagger, QA head, math head, etc.).\n2. For every sentinel i we track moving KL   k_i  and allocate a per-capability budget  b_c.  Budgets evolve by multiplicative weight updates so that  Σ_c b_c ≈ B_target, where  B_target  is determined *once* from a theory-based bound:  B_target = π/√(N·d)  with N the training set size and d adapter rank.\n3. Dual control: at each step we compute utility  u = Δ task-loss / Σ_i Δk_i, update the global price λ as in SACO, *and* per-capability prices λ_c from u_c = Δ task-loss / Σ_{i∈S_c} Δk_i.\n4. Learning-rate scale α_t = γ/(λ+ε); per-capability dampers  δ_c = 1/(λ_c+ε).  Effective step for parameter block p is  lr_eff = lr · min(α_t, δ_{cap(p)})  where cap(p) labels the capability the block mainly serves (determined once by gradient attribution).\n5. Hard safety: if any k_i exceeds 0.5·b_{cap(i)} the current batch is re-played with lr=0 (gradient flushing) and the optimiser state is rolled back – guarantees monotone budget compliance.\nAll operations are batched; extra FLOPs <1 %."
+      }
+    ]
   }
 }
