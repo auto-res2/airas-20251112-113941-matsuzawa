@@ -1,0 +1,31 @@
+# -----------------------------------------------------------------------------
+#  Global Hydra configuration (root)
+# -----------------------------------------------------------------------------
+
+defaults:
+  # The *runs* directory holds per-experiment YAMLs.  We alias it as group *run*
+  # so that CLI overrides use `run=<id>`
+  - runs@run: ???
+  - _self_
+
+# execution mode ---------------------------------------------------------------
+mode: full            # overridden via CLI: mode=trial|full
+
+# artefact paths ---------------------------------------------------------------
+results_dir: results
+
+# reproducibility --------------------------------------------------------------
+seed: 42
+
+# WandB -----------------------------------------------------------------------
+wandb:
+  entity: gengaru617-personal
+  project: 2025-11-12
+  mode: online     # auto-overridden in trial-mode
+
+# Optuna defaults --------------------------------------------------------------
+optuna:
+  n_trials: 0
+  direction: maximize
+  metric: exact_match_dev
+  search_space: {}

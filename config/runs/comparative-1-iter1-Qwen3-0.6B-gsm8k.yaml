@@ -1,0 +1,51 @@
+run_id: comparative-1-iter1-Qwen3-0.6B-gsm8k
+method: baseline_karma
+model:
+  name: Qwen/Qwen3-0.6B
+  quantization:
+    scheme: nf4
+    bits: 4
+  peft:
+    type: qlora
+    rank: 64
+    alpha: 32
+    dropout: 0.05
+  dtype: bfloat16
+dataset:
+  name: gsm8k
+  config: main
+  max_seq_length: 512
+  batch_size: 64
+  num_workers: 8
+training:
+  epochs: 3
+  gradient_accumulation_steps: 2
+  base_learning_rate: 3e-4
+  lr_scheduler: cosine
+  warmup_ratio: 0.05
+  weight_decay: 0.01
+  optimizer: adamw
+  beta1: 0.9
+  beta2: 0.95
+  epsilon: 1.0e-8
+  clip_grad_norm: 1.0
+  karma:
+    global_kl_budget_B: 1.0
+    moving_average_tau: 100
+seed: 42
+optuna:
+  n_trials: 40
+  direction: maximize
+  metric: exact_match_dev
+  search_space:
+    base_learning_rate:
+      type: loguniform
+      low: 1e-5
+      high: 5e-4
+    karma.global_kl_budget_B:
+      type: loguniform
+      low: 0.01
+      high: 5.0
+    dataset.batch_size:
+      type: categorical
+      choices: [32, 48, 64]

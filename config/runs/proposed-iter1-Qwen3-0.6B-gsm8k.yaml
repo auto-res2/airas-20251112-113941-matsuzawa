@@ -1,0 +1,66 @@
+run_id: proposed-iter1-Qwen3-0.6B-gsm8k
+method: proposed
+model:
+  name: Qwen/Qwen3-0.6B
+  quantization:
+    scheme: nf4
+    bits: 4
+  peft:
+    type: qlora
+    rank: 64
+    alpha: 32
+    dropout: 0.05
+  dtype: bfloat16
+  capability_taxonomy: [syntax, facts, arith, logic]
+dataset:
+  name: gsm8k
+  config: main
+  max_seq_length: 512
+  batch_size: 64
+  num_workers: 8
+  streaming_source:
+    name: CommonCrawl
+    snapshot: 2022-10
+  sentinel:
+    pool_size_per_capability: 256
+    refresh_interval_steps: 200
+training:
+  epochs: 3
+  gradient_accumulation_steps: 2
+  base_learning_rate: 3e-4
+  lr_scheduler: cosine
+  warmup_ratio: 0.05
+  weight_decay: 0.01
+  optimizer: adamw
+  beta1: 0.9
+  beta2: 0.95
+  epsilon: 1.0e-8
+  clip_grad_norm: 1.0
+  hiFiSACO:
+    gamma: 1.0
+    eta: 0.01
+    epsilon: 1.0e-8
+    B_target_formula: "pi / sqrt(N * d)"
+    hard_safety: true
+    rollback: true
+seed: 42
+optuna:
+  n_trials: 40
+  direction: maximize
+  metric: exact_match_dev
+  search_space:
+    base_learning_rate:
+      type: loguniform
+      low: 1e-5
+      high: 5e-4
+    hiFiSACO.gamma:
+      type: loguniform
+      low: 0.1
+      high: 5.0
+    hiFiSACO.eta:
+      type: loguniform
+      low: 0.001
+      high: 0.1
+    dataset.sentinel.refresh_interval_steps:
+      type: categorical
+      choices: [100, 200, 400]
